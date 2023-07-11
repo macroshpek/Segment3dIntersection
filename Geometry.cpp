@@ -3,7 +3,7 @@
 #include <cmath>
 #include <limits>
 #include <exception>
-#include <utility>
+
 
 Point3D::Point3D(const double x = 0, const double y = 0, const double z = 0) : x_(x), y_(y), z_(z) {}
 
@@ -24,17 +24,17 @@ double Point3D::GetZ() const
 	return z_;
 }
 
-double Point3D::SetX(double x)
+void Point3D::SetX(double x)
 {
 	x_ = x;
 }
 
-double Point3D::SetY(double y)
+void Point3D::SetY(double y)
 {
 	y_ = y;
 }
 
-double Point3D::SetZ(double z)
+void Point3D::SetZ(double z)
 {
 	z_ = z;
 }
@@ -115,9 +115,18 @@ bool Point3D::operator==(const Point3D& other) const
 
 Point3D Segment3D::IntersectByPoint(const Segment3D& other) const
 {
+	
 	double lambd1 = (other.Direction().GetX() != 0) ? (Direction().GetX() / other.Direction().GetX()) : 0;
 	double lambd2 = (other.Direction().GetY() != 0) ? (Direction().GetY() / other.Direction().GetY()) : 0;
 	double lambd3 = (other.Direction().GetZ() != 0) ? (Direction().GetZ() / other.Direction().GetZ()) : 0;
+
+	if (std::abs(lambd1 - lambd2) > std::numeric_limits<double>::epsilon()) {
+		std::pair<double, double>* solution = MathUtil::SolveSystemWithTwoVariables(Direction().GetX(), -other.Direction().GetX(),
+																					-start_.GetX() + other.start_.GetX(),
+																					Direction().GetX(),
+																					-other.Direction().GetY(),
+																					-start_.GetY() + other.start_.GetY());
+	}
 
 	/*if (std::abs(lambd1 - lambd2) > std::numeric_limits<double>::epsilon()) {
 		double det = Direction().GetX() * (-other.Direction().y) - Direction().y * (-other.Direction().GetX());
@@ -169,22 +178,7 @@ Point3D Segment3D::IntersectByPoint(const Segment3D& other) const
 
 Segment3D Segment3D::IntersectBySegment(const Segment3D& other) const
 {
-	return Segment3D();
-}
-
-std::pair<double, double> Segment3D::SolveSystemWithTwoVariables(const double A, const double B, const double C, const double D, const double E, const double F)
-{
-	//Ax + By = C
-	//Dx + Ey = F
-	double det = A * E - B * D;
-	if (abs(det) < std::numeric_limits<double>::epsilon()) {
-		//return nullptr;
-	}
-	const double X = (C * E - B * F) / det;
-	const double Y = (A * F - C * D) / det;
-
-	//std::pair<double, double>* solution = new std::make_pair<double, double>(X, Y);
-	return std::pair<double, double>();
+	//return Segment3D();
 }
 
 Point3D Segment3D::Direction() const
@@ -194,15 +188,89 @@ Point3D Segment3D::Direction() const
 
 Geometry* Segment3D::Intersect(const Segment3D& other) const
 {
-	if (Point3D::mixedProduct(Direction(), other.Direction(), other.start_ - start_) <= std::numeric_limits<double>::epsilon()) {
-
-		if ((Direction() ^ other.Direction()) == Point3D::zero()) {
-			//logic about identical or parallel segments
-		}
-
-		//std::cout << "segments intersects" << std::endl;
+	//This condition means that the vectors do not lie in the same plane
+	if (Point3D::mixedProduct(Direction(), other.Direction(), other.start_ - start_) > std::numeric_limits<double>::epsilon()) {
+		//std::cout << "segments is skrew" << std::endl;
+		return nullptr;
 	}
-	//std::cout << "segments is skrew" << std::endl;
-	return nullptr;
+
+	if ((Direction() ^ other.Direction()) == Point3D::zero()) {
+		//logic about identical or parallel segments
+	}
+
+
+	//std::cout << "segments intersects" << std::endl;
 }
 
+Point2D::Point2D(const double x = 0, const double y = 0) : x_(x), y_(y)
+{
+}
+
+Point2D::Point2D(const Point2D& other) : x_(other.x_), y_(other.y_)
+{
+}
+
+double Point2D::GetX() const
+{
+	return x_;
+}
+
+double Point2D::GetY() const
+{
+	return y_;
+}
+
+double Point2D::SetX(double x)
+{
+	return 0;
+}
+
+double Point2D::SetY(double y)
+{
+	return 0.0;
+}
+
+Point2D Point2D::operator+(const Point2D& other) const
+{
+	return Point2D();
+}
+
+Point2D Point2D::operator-(const Point2D& other) const
+{
+	return Point2D();
+}
+
+Point2D Point2D::operator*(const double skalar) const
+{
+	return Point2D();
+}
+
+Point2D Point2D::operator/(const double skalar) const
+{
+	return Point2D();
+}
+
+Point2D Point2D::operator^(const Point2D& other) const
+{
+	return Point2D();
+}
+
+bool Point2D::operator==(const Point2D& other) const
+{
+	return false;
+}
+
+double Point2D::operator*(const Point2D& other) const
+{
+	return 0.0;
+}
+
+double Point2D::mixedProduct(const Point2D& a, const Point2D& b, const Point2D& c)
+{
+	return 0.0;
+}
+
+Point2D Point2D::zero()
+{
+	return Point2D();
+}
