@@ -1,7 +1,6 @@
 #pragma once
 
 #include <utility>
-#include "MathUtil.h"
 #include <cmath>
 #include <limits>
 #include <exception>
