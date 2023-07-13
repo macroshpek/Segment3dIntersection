@@ -1,11 +1,6 @@
-
 #include "Geometry.h"
-#include <cmath>
-#include <limits>
-#include <exception>
 
-
-Point3D::Point3D(const double x = 0, const double y = 0, const double z = 0) : x_(x), y_(y), z_(z) {}
+Point3D::Point3D(const double x, const double y, const double z) : x_(x), y_(y), z_(z) {}
 
 Point3D::Point3D(const Point3D& other) : x_(other.x_), y_(other.y_), z_(other.z_) {}
 
@@ -113,7 +108,7 @@ bool Point3D::operator==(const Point3D& other) const
 	return false;
 }
 
-Point3D Segment3D::IntersectByPoint(const Segment3D& other) const
+Point3D* Segment3D::IntersectByPoint(const Segment3D& other) const
 {
 	
 	double lambd1 = (other.Direction().GetX() != 0) ? (Direction().GetX() / other.Direction().GetX()) : 0;
@@ -121,11 +116,25 @@ Point3D Segment3D::IntersectByPoint(const Segment3D& other) const
 	double lambd3 = (other.Direction().GetZ() != 0) ? (Direction().GetZ() / other.Direction().GetZ()) : 0;
 
 	if (std::abs(lambd1 - lambd2) > std::numeric_limits<double>::epsilon()) {
-		std::pair<double, double>* solution = MathUtil::SolveSystemWithTwoVariables(Direction().GetX(), -other.Direction().GetX(),
-																					-start_.GetX() + other.start_.GetX(),
-																					Direction().GetX(),
-																					-other.Direction().GetY(),
-																					-start_.GetY() + other.start_.GetY());
+		
+		Point2D start_first(start_.GetX(), start_.GetY());
+		Point2D end_first(end_.GetX(), end_.GetY());
+
+		Point2D start_second(-other.start_.GetX(), -other.start_.GetY());
+		Point2D end_second(-other.end_.GetX(), -other.end_.GetY());
+
+		Line2D pr_first(start_first, end_first);
+		Line2D pr_second(start_second, end_second);
+
+		Point2D* solution = pr_first.Intersect(pr_second);
+
+		if (abs(Direction().GetZ() * solution->GetX() - solution->GetY() * other.Direction().GetZ() + start_.GetZ() -other.start_.GetZ()) < std::numeric_limits<double>::epsilon())
+		{
+			Point3D result = Point3D(other.start_) + other.Direction() * solution->GetY();
+			return &result;
+		}
+
+
 	}
 
 	/*if (std::abs(lambd1 - lambd2) > std::numeric_limits<double>::epsilon()) {
@@ -179,6 +188,11 @@ Point3D Segment3D::IntersectByPoint(const Segment3D& other) const
 Segment3D Segment3D::IntersectBySegment(const Segment3D& other) const
 {
 	//return Segment3D();
+	return Segment3D(Point3D::zero(), Point3D::zero());
+}
+
+Segment3D::Segment3D(const Point3D& start, const Point3D& end) : start_(start), end_(end)
+{
 }
 
 Point3D Segment3D::Direction() const
@@ -198,11 +212,29 @@ Geometry* Segment3D::Intersect(const Segment3D& other) const
 		//logic about identical or parallel segments
 	}
 
-
+	Point3D* inter = this->IntersectByPoint(other);
+	return inter;
 	//std::cout << "segments intersects" << std::endl;
 }
 
-Point2D::Point2D(const double x = 0, const double y = 0) : x_(x), y_(y)
+std::ostream& operator<<(std::ostream& os, const Point2D& point)
+{
+	return os << "Point2D (" << point.GetX() << ", " << point.GetY() << ")";
+}
+
+std::istream& operator>>(std::istream& is, Point2D& point)
+{
+	double x = 0;
+	double y = 0;
+	is >> x >> y;
+	if (is) {
+		point.SetX(x);
+		point.SetY(y);
+	}
+	return is;
+}
+
+Point2D::Point2D(const double x, const double y) : x_(x), y_(y)
 {
 }
 
@@ -220,57 +252,107 @@ double Point2D::GetY() const
 	return y_;
 }
 
-double Point2D::SetX(double x)
+void Point2D::SetX(double x)
 {
-	return 0;
+	x_ = x;
 }
 
-double Point2D::SetY(double y)
+void Point2D::SetY(double y)
 {
-	return 0.0;
+	y_ = y;
 }
 
 Point2D Point2D::operator+(const Point2D& other) const
 {
-	return Point2D();
+	Point2D sum;
+	sum.x_ = x_ + other.x_;
+	sum.y_ = y_ + other.y_;
+	return sum;
 }
 
 Point2D Point2D::operator-(const Point2D& other) const
 {
-	return Point2D();
+	Point2D sub;
+	sub.x_ = x_ - other.x_;
+	sub.y_ = y_ - other.y_;
+	return sub;
 }
 
 Point2D Point2D::operator*(const double skalar) const
 {
-	return Point2D();
+	Point2D mult;
+	mult.x_ = x_ * skalar;
+	mult.y_ = y_ * skalar;
+	return mult;
 }
 
 Point2D Point2D::operator/(const double skalar) const
 {
-	return Point2D();
-}
-
-Point2D Point2D::operator^(const Point2D& other) const
-{
-	return Point2D();
+	if (std::abs(skalar) > std::numeric_limits<double>::epsilon()) {
+		Point2D div;
+		div.x_ = x_ / skalar;
+		div.y_ = y_ / skalar;
+		return div;
+	}
+	throw std::exception("division by zero");
 }
 
 bool Point2D::operator==(const Point2D& other) const
 {
+	if (std::abs(x_ - other.x_) < std::numeric_limits<double>::epsilon() &&
+		std::abs(y_ - other.y_) < std::numeric_limits<double>::epsilon())
+		return true;
+
 	return false;
 }
 
 double Point2D::operator*(const Point2D& other) const
 {
-	return 0.0;
-}
-
-double Point2D::mixedProduct(const Point2D& a, const Point2D& b, const Point2D& c)
-{
-	return 0.0;
+	double skalarProduct;
+	skalarProduct = x_ * other.x_ + y_ * other.y_;
+	return skalarProduct;
 }
 
 Point2D Point2D::zero()
 {
 	return Point2D();
+}
+
+Line2D::Line2D(const Point2D start, const Point2D end) : start_(start), end_(end)
+{
+}
+
+Point2D Line2D::Direction() const
+{
+	return start_ - end_;
+}
+
+Point2D* Line2D::Intersect(const Line2D& other) const
+{
+	double det = Direction().GetX() * other.Direction().GetY() - Direction().GetY() * other.Direction().GetX();
+
+	if (abs(det) < std::numeric_limits<double>::epsilon()) {
+		return nullptr;
+	}
+
+	Point2D right = other.start_ - start_;
+
+	double C = right.GetX();
+	double F = right.GetY();
+
+	double x = (C * other.Direction().GetY() - other.Direction().GetX() * F) / det;
+	double y = (Direction().GetX() * F - C * Direction().GetY()) / det;
+
+	return new Point2D(x, y);
+
+	/*
+	const double A = 5, B = 4, C = 13;
+	const double D = 2, E = 3, F = 8;
+
+	const double det = A * E - B * D;
+
+	const double X = (C * E - B * F) / det;
+	const double Y = (A * F - C * D) / det;
+	*/
+
 }
