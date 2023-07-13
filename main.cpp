@@ -21,10 +21,12 @@ int main() {
 
 	std::cout << inter->GetX() << " " << inter->GetY() << " " << inter->GetZ();
 
-	Point2D ner;
+
+	//Testing the Point2D functionality
+	Point2D p2_A;
 
 	
-	std::cin >> ner;
+	std::cin >> p2_A;
 
-	std::cout << ner;
+	std::cout << p2_A;
 }
