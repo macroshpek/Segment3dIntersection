@@ -39,6 +39,7 @@ public:
 	Point2D operator+(const Point2D& other) const;
 
 	Point2D operator-(const Point2D& other) const;
+	Point2D operator-() const;
 
 	Point2D operator*(const double skalar) const;
 

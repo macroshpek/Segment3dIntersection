@@ -278,6 +278,11 @@ Point2D Point2D::operator-(const Point2D& other) const
 	return sub;
 }
 
+Point2D Point2D::operator-() const
+{
+	return Point2D(-GetX(), -GetY());
+}
+
 Point2D Point2D::operator*(const double skalar) const
 {
 	Point2D mult;
