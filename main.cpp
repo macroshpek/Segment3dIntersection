@@ -66,6 +66,7 @@ int main() {
 
 	Geometry* inter = AB.Intersect(CD);
 
+	std::cout << *inter;
 
 
 

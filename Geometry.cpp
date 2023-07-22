@@ -1,5 +1,27 @@
 #include "Geometry.h"
 
+std::ostream& Point3D::Write(std::ostream& os) const
+{
+	return os << "Point3D:(" << x_ << ", " << y_ << ", " << z_<<")";
+}
+
+std::istream& Point3D::Read(std::istream& is)
+{
+	double x = 0;
+	double y = 0;
+	double z = 0;
+
+	is >> x >> y >> z;
+
+	if (is) {
+		x_ = x;
+		y_ = y;
+		z_ = z;
+	}
+
+	return is;
+}
+
 Point3D::Point3D(const double x, const double y, const double z) : x_(x), y_(y), z_(z) {}
 
 Point3D::Point3D(const Point3D& other) : x_(other.x_), y_(other.y_), z_(other.z_) {}
@@ -163,6 +185,35 @@ bool Segment3D::IsIdentical(const Segment3D& other) const
 	return false;
 }
 
+std::ostream& Segment3D::Write(std::ostream& os) const
+{
+	return os << "Segment3D:{(" << start_.GetX() << ", " << start_.GetY() << ", " << start_.GetZ() << "), (" 
+								<< end_.GetX() << ", " << end_.GetY() << ", " << end_.GetZ() << ")}";
+}
+
+std::istream& Segment3D::Read(std::istream& is)
+{
+	double x1 = 0;
+	double y1 = 0;
+	double z1 = 0;
+	double x2 = 0;
+	double y2 = 0;
+	double z2 = 0;
+
+	is >> x1 >> y1 >> z1 >> x2 >> y2 >> z2;
+
+	if (is) {
+		start_.SetX(x1);
+		start_.SetY(y1);
+		start_.SetZ(z1);
+		end_.SetX(x2);
+		end_.SetY(y2);
+		end_.SetZ(z2);
+	}
+
+	return is;
+}
+
 Segment3D::Segment3D(const Point3D& start, const Point3D& end) : start_(start), end_(end)
 {
 }
@@ -263,20 +314,15 @@ std::ostream& operator<<(std::ostream& os, InterTypes type)
 	return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const Point2D& point)
+std::ostream& operator<<(std::ostream& os, const Geometry& obj)
 {
-	return os << "Point2D (" << point.GetX() << ", " << point.GetY() << ")";
+	obj.Write(os);
+	return os;
 }
 
-std::istream& operator>>(std::istream& is, Point2D& point)
+std::istream& operator>>(std::istream& is, Geometry& obj)
 {
-	double x = 0;
-	double y = 0;
-	is >> x >> y;
-	if (is) {
-		point.SetX(x);
-		point.SetY(y);
-	}
+	obj.Read(is);
 	return is;
 }
 
@@ -296,6 +342,26 @@ std::istream& operator>>(std::istream& is, Point3D& point)
 		point.SetY(y);
 		point.SetZ(z);
 	}
+	return is;
+}
+
+std::ostream& Point2D::Write(std::ostream& os) const
+{
+	return os << "Point2D: (" << x_ << ", " << y_ << ")";
+}
+
+std::istream& Point2D::Read(std::istream& is)
+{
+	double x = 0;
+	double y = 0;
+
+	is >> x >> y;
+
+	if (is) {
+		x_ = x;
+		y_ = y;
+	}
+
 	return is;
 }
 
@@ -403,6 +469,16 @@ Point2D Point2D::zero()
 	return Point2D();
 }
 
+std::ostream& Line2D::Write(std::ostream& os) const
+{
+	return os << "Line2D: Direction - (" << Direction() << "), through a" << start_;
+}
+std::istream& Line2D::Read(std::istream& is)
+{
+	return is;
+}
+
+
 Line2D::Line2D(const Point2D& start, const Point2D& end) : start_(start), end_(end)
 {
 }
@@ -454,6 +530,30 @@ Point2D* Segment2D::IntersectByPoint(const Segment2D& other) const
 Segment2D Segment2D::IntersectBySegment(const Segment2D& other) const
 {
 	return Segment2D((1,1), (2,2));
+}
+
+std::ostream& Segment2D::Write(std::ostream& os) const
+{
+	return os << "Segment2D:{(" << start_.GetX() << ", " << start_.GetY() << "), (" << end_.GetX() << ", " << end_.GetY() << ")}";
+}
+
+std::istream& Segment2D::Read(std::istream& is)
+{
+	double x1 = 0;
+	double y1 = 0;
+	double x2 = 0;
+	double y2 = 0;
+
+	is >> x1 >> y1 >> x2 >> y2;
+
+	if (is) {
+		start_.SetX(x1);
+		start_.SetY(y1);
+		end_.SetX(x2);
+		end_.SetY(y2);
+	}
+
+	return is; 
 }
 
 Segment2D::Segment2D(const Point2D& start, const Point2D& end)

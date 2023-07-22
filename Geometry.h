@@ -19,18 +19,27 @@ std::ostream& operator<<(std::ostream& os, InterTypes type);
 
 class Geometry
 {
+public:
+	virtual std::ostream& Write(std::ostream& os) const = 0;
+	virtual std::istream& Read(std::istream& is) = 0;
 
+
+	friend
+		std::ostream& operator<<(std::ostream& os, const Geometry& obj);
+	friend std::istream& operator>>(std::istream& is, Geometry& obj);
 };
 
 class Point2D : public Geometry
 {
+private:
+
 	double x_;
 	double y_;
 
 public:
-	
-	friend std::ostream& operator<<(std::ostream& os, const Point2D& point);
-	friend std::istream& operator>>(std::istream& is, Point2D& point);
+	virtual std::ostream& Write(std::ostream& os) const override;
+	virtual std::istream& Read(std::istream& is) override;
+
 
 	Point2D(const double x = 0, const double y = 0);
 	Point2D(const Point2D& other);
@@ -74,6 +83,10 @@ class Point3D : public Geometry
 	double z_;
 
 public:
+
+	virtual std::ostream& Write(std::ostream& os) const override;
+	virtual std::istream& Read(std::istream& is) override;
+
 
 	friend std::ostream& operator<<(std::ostream& os, const Point3D& point);
 	friend std::istream& operator>>(std::istream& is, Point3D& point);
@@ -127,16 +140,18 @@ class Segment2D : public Geometry
 	Point2D * IntersectByPoint(const Segment2D & other) const;
 
 	Segment2D IntersectBySegment(const Segment2D & other) const;
+
 public:
+
+	virtual std::ostream& Write(std::ostream& os) const override;
+	virtual std::istream& Read(std::istream& is) override;
+
 
 	Segment2D(const Point2D& start, const Point2D& end);
 	Segment2D(const Segment2D& other);
 
 	const Point2D& GetStart() const;
 	const Point2D& GetEnd() const;
-
-	friend std::ostream& operator<<(std::ostream& os, const Point2D& point);
-	friend std::istream& operator>>(std::istream& is, Point2D& point);
 
 	Point2D Direction() const;
 
@@ -159,8 +174,12 @@ class Segment3D : public Geometry
 	Geometry* IntersectBySegment(const Segment3D& other) const;
 
 	bool IsIdentical(const Segment3D& other) const;
-		
+
 public:
+
+	virtual std::ostream& Write(std::ostream& os) const override;
+	virtual std::istream& Read(std::istream& is) override;
+		
 
 	Segment3D(const Point3D& start, const Point3D& end);
 	Segment3D(const Segment3D& other);
@@ -180,6 +199,9 @@ class Line2D : public Geometry
 {
 	Point2D start_;
 	Point2D end_;
+
+	virtual std::ostream& Write(std::ostream& os) const override;
+	virtual std::istream& Read(std::istream& is) override;
 
 public:
 	Line2D(const Point2D& start, const Point2D& end);
