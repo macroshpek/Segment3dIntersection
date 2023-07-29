@@ -44,6 +44,11 @@ Point3D Point3D::operator-(const Point3D& other) const
 	return sub;
 }
 
+Point3D Point3D::operator-() const
+{
+	return Point3D(-GetX(), -GetY(), -GetZ());
+}
+
 Point3D Point3D::operator*(const double skalar) const
 {
 	Point3D mult;
@@ -55,7 +60,7 @@ Point3D Point3D::operator*(const double skalar) const
 
 Point3D Point3D::operator/(const double skalar) const
 {
-	if (std::abs(skalar) > std::numeric_limits<double>::epsilon()) {
+	if (std::abs(skalar) >= 2 * std::numeric_limits<double>::epsilon()) {
 		Point3D div;
 		div.x_ = x_ / skalar;
 		div.y_ = y_ / skalar;
@@ -112,9 +117,9 @@ Point3D Point3D::operator^(const Point3D& other) const {
 
 bool Point3D::operator==(const Point3D& other) const
 {
-	if (std::abs(x_ - other.x_) < std::numeric_limits<double>::epsilon() &&
-		std::abs(y_ - other.y_) < std::numeric_limits<double>::epsilon() &&
-		std::abs(z_ - other.z_) < std::numeric_limits<double>::epsilon())
+	if (std::abs(x_ - other.x_) <=  2 * std::numeric_limits<double>::epsilon() &&
+		std::abs(y_ - other.y_) <= 2 * std::numeric_limits<double>::epsilon() &&
+		std::abs(z_ - other.z_) <= 2 * std::numeric_limits<double>::epsilon())
 		return true;
 
 	return false;
@@ -122,58 +127,37 @@ bool Point3D::operator==(const Point3D& other) const
 
 Geometry* Segment3D::IntersectByPoint(const Segment3D& other) const
 {
-	
-	double lambd1 = (other.Direction().GetX() != 0) ? (Direction().GetX() / other.Direction().GetX()) : 0;
-	double lambd2 = (other.Direction().GetY() != 0) ? (Direction().GetY() / other.Direction().GetY()) : 0;
-	double lambd3 = (other.Direction().GetZ() != 0) ? (Direction().GetZ() / other.Direction().GetZ()) : 0;
+	Line3D first{ start_, Direction() };
+	Line3D second{ other.start_, other.Direction() };
 
-	if (std::abs(lambd1 - lambd2) > std::numeric_limits<double>::epsilon()) {
-		Line2D pr_first(start_.ToXY(),end_.ToXY());
-		Line2D pr_second(-other.start_.ToXY(), -other.end_.ToXY());
+	Point3D* result = first.Intersect(second);
 
-		Point2D* solution = pr_first.Intersect(pr_second);
-
-		if (abs(Direction().GetZ() * solution->GetX() - solution->GetY() * other.Direction().GetZ() + 
-					start_.GetZ() -other.start_.GetZ()) < std::numeric_limits<double>::epsilon())
-		{
-			Point3D result = Point3D(other.start_) + other.Direction() * solution->GetY();
-			return &result;
-		}
-	}
-
-	if (std::abs(lambd2 - lambd3) > std::numeric_limits<double>::epsilon()) {
-		Line2D pr_first(start_.ToYZ(), end_.ToYZ());
-		Line2D pr_second(-other.start_.ToYZ(), -other.end_.ToYZ());
-
-		Point2D* solution = pr_first.Intersect(pr_second);
-
-		if (abs(Direction().GetX() * solution->GetX() - solution->GetY() * other.Direction().GetX() +
-			start_.GetX() - other.start_.GetX()) < std::numeric_limits<double>::epsilon())
-		{
-			Point3D result = Point3D(other.start_) + other.Direction() * solution->GetY();
-			return &result;
-		}
-	}
-
-	if (std::abs(lambd1 - lambd3) > std::numeric_limits<double>::epsilon()) {
-		Line2D pr_first(start_.ToXZ(), end_.ToXZ());
-		Line2D pr_second(-other.start_.ToXZ(), -other.end_.ToXZ());
-
-		Point2D* solution = pr_first.Intersect(pr_second);
-
-		if (abs(Direction().GetY() * solution->GetX() - solution->GetY() * other.Direction().GetY() +
-			start_.GetY() - other.start_.GetY()) < std::numeric_limits<double>::epsilon())
-		{
-			Point3D result = Point3D(other.start_) + other.Direction() * solution->GetY();
-			return &result;
-		}
-	}
+	if (Contains(*result) && other.Contains(*result))
+		return result;
+	else
+		return nullptr;
 }
 
 Geometry* Segment3D::IntersectBySegment(const Segment3D& other) const
 {
-	if (start_ == other.end_)
-		return new Point3D(start_);
+	Geometry* result = nullptr;
+
+	if (Contains(other.start_) && other.Contains(end_)) {
+		result = new Segment3D(other.start_, end_);
+	}
+	if (Contains(other.end_) && other.Contains(start_)) {
+		result = new Segment3D(other.end_, start_);
+	}
+	if (Contains(other.start_) && Contains(other.end_)) {
+		result = new Segment3D(other);
+	}
+	if (other.Contains(start_) && other.Contains(end_)) {
+		result = new Segment3D(*this);
+	}
+
+	if ((*(Segment3D*)result).IsDot())
+		return new Point3D((*(Segment3D*)result).start_);
+	return result;
 }
 
 bool Segment3D::IsIdentical(const Segment3D& other) const
@@ -218,7 +202,7 @@ Segment3D::Segment3D(const Point3D& start, const Point3D& end) : start_(start), 
 {
 }
 
-Segment3D::Segment3D(const Segment3D& other)
+Segment3D::Segment3D(const Segment3D& other) : start_(other.start_), end_(other.end_)
 {
 }
 
@@ -273,6 +257,22 @@ double Segment3D::DistanceBetween(const Segment3D& other) const
 
 Geometry* Segment3D::Intersect(const Segment3D& other) const
 {
+	if (IsDot()) {
+		if (other.Contains(start_)) {
+			return new Point3D(start_);
+		}
+	}
+	if (other.IsDot()) {
+		if (Contains(other.start_)) {
+			return new Point3D(other.start_);
+		}
+	}
+	if (IsDot() && other.IsDot()) {
+		if (start_ == other.start_) {
+			return new Point3D(start_);
+		}
+	}
+
 	InterTypes type = CheckIntersection(other);
 	Geometry* result = nullptr;
 	switch (type) {
@@ -287,6 +287,26 @@ Geometry* Segment3D::Intersect(const Segment3D& other) const
 
 }
 
+double Segment3D::Length() const
+{
+	return std::sqrt((start_.GetX() - end_.GetX()) * (start_.GetX() - end_.GetX()) +
+					(start_.GetY() - end_.GetY()) * (start_.GetY() - end_.GetY()) +
+					(start_.GetZ() - end_.GetZ()) * (start_.GetZ() - end_.GetZ()));
+}
+
+bool Segment3D::Contains(const Point3D& point) const
+{
+	if (IsDot()) {
+		return start_ == point;
+	}
+	Segment3D AB{ start_, point };
+	Segment3D BC{ point, end_ };
+	if (abs(Length() - (AB.Length() + BC.Length())) <= 2 * std::numeric_limits<double>::epsilon()) {
+		return true;
+	}
+	return false;
+}
+
 std::ostream& operator<<(std::ostream& os, InterTypes type)
 {
 	if (os) {
@@ -299,13 +319,13 @@ std::ostream& operator<<(std::ostream& os, InterTypes type)
 			os << "Segments are screw";
 			break;
 		case Parallel:
-			os << "Segmnets are parallel";
+			os << "Segments are parallel";
 			break;
 		case ByPoint:
-			os << "Segmnets intersects by point";
+			os << "Segments intersects by point";
 			break;
 		case BySegment:
-			os << "Segmnets intersects by segment";
+			os << "Segments intersects by segment";
 			break;
 		default:
 			break;
@@ -316,7 +336,12 @@ std::ostream& operator<<(std::ostream& os, InterTypes type)
 
 std::ostream& operator<<(std::ostream& os, const Geometry& obj)
 {
-	obj.Write(os);
+	if (&obj != nullptr ) {
+		obj.Write(os);
+	}
+	else {
+		os << "object is empty";
+	}
 	return os;
 }
 
@@ -343,6 +368,11 @@ std::istream& operator>>(std::istream& is, Point3D& point)
 		point.SetZ(z);
 	}
 	return is;
+}
+
+Point3D operator*(const double skalar, const Point3D& point)
+{
+	return point * skalar;
 }
 
 std::ostream& Point2D::Write(std::ostream& os) const
@@ -424,7 +454,7 @@ Point2D Point2D::operator*(const double skalar) const
 
 Point2D Point2D::operator/(const double skalar) const
 {
-	if (std::abs(skalar) > std::numeric_limits<double>::epsilon()) {
+	if (std::abs(skalar) >= 2 * std::numeric_limits<double>::epsilon()) {
 		Point2D div;
 		div.x_ = x_ / skalar;
 		div.y_ = y_ / skalar;
@@ -435,8 +465,8 @@ Point2D Point2D::operator/(const double skalar) const
 
 bool Point2D::operator==(const Point2D& other) const
 {
-	if (std::abs(x_ - other.x_) < std::numeric_limits<double>::epsilon() &&
-		std::abs(y_ - other.y_) < std::numeric_limits<double>::epsilon())
+	if (std::abs(x_ - other.x_) <= 2 * std::numeric_limits<double>::epsilon() &&
+		std::abs(y_ - other.y_) <= 2 * std::numeric_limits<double>::epsilon())
 		return true;
 
 	return false;
@@ -496,7 +526,7 @@ Point2D* Line2D::Intersect(const Line2D& other) const
 {
 	double det = Direction().GetX() * other.Direction().GetY() - Direction().GetY() * other.Direction().GetX();
 
-	if (abs(det) < std::numeric_limits<double>::epsilon()) {
+	if (abs(det) <= 2 * std::numeric_limits<double>::epsilon()) {
 		return nullptr;
 	}
 
@@ -594,7 +624,7 @@ InterTypes Segment2D::CheckIntersect(const Segment2D& other) const
 
 Geometry* Segment2D::Intersect(const Segment2D& other) const
 {
-	if(!this->CheckIntersect(other))
+	if(!CheckIntersect(other))
 		return nullptr;
 
 	return IntersectByPoint(other);
@@ -604,4 +634,45 @@ double Segment2D::Length() const
 {
 	return std::sqrt((start_.GetX() - end_.GetX()) * (start_.GetX() - end_.GetX()) +
 					(start_.GetY() - end_.GetY()) * (start_.GetY() - end_.GetY()));
+}
+
+std::ostream& Line3D::Write(std::ostream& os) const
+{
+	return os << "Line3D: Direction - (" << direction_ << "), through a" << origin_;
+}
+
+std::istream& Line3D::Read(std::istream& is)
+{
+	return is;
+}
+
+Line3D::Line3D(const Point3D& origin, const Point3D& direction)
+{
+	if (direction == origin)
+		throw std::exception("undefined direction");
+	origin_ = origin;
+	direction_ = direction;
+}
+
+Point3D* Line3D::Intersect(const Line3D& other) const
+{
+	Point3D p = origin_;           
+	Point3D v = direction_;       
+	Point3D q = other.origin_;    
+	Point3D u = other.direction_; 
+
+	Point3D a = v ^ u;
+
+	double dot = a * a;
+
+	// if v and u are parallel (v x u = 0), then no intersection, return nullptr
+	if (dot == 0)
+		return nullptr;
+
+	Point3D b = (q - p) ^ u;
+
+	double t = b * a / dot;
+
+	Point3D point = p + (t * v);
+	return  new Point3D(point);
 }
