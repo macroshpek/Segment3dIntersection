@@ -23,10 +23,16 @@ class Geometry
 	virtual std::ostream& Write(std::ostream& os) const = 0;
 	virtual std::istream& Read(std::istream& is) = 0;
 
+protected:
+	static double& GetEpsilon();
+
 public:
 
 	friend std::ostream& operator<<(std::ostream& os, const Geometry& obj);
 	friend std::istream& operator>>(std::istream& is, Geometry& obj);
+
+	static void SetPrecision(const double precision);
+
 };
 
 class Point2D : public Geometry

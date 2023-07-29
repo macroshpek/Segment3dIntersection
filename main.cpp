@@ -72,12 +72,13 @@ int main() {
 	Segment3D IT{ I,T };
 	Segment3D ID{ I,D };
 
+	Geometry::SetPrecision(1);
+
 	std::cout << ID.Contains(A) << std::endl;
 	std::cout << ID.Contains({0.0000000000001,0.0000000000002,0.0000000000001}) << std::endl;
 	std::cout << ID.Contains(B) << std::endl;
 	std::cout << ID.Contains(C) << std::endl; // doesn`t work :ccccc
 	std::cout << ID.Contains(D) << std::endl;
-	return 0;
 	std::cout << *AB.Intersect(CD) << std::endl; //отрезки наложены друг на друга
 	std::cout << *AB.Intersect(GD) << std::endl; //один отрезок содержится в другом
 	std::cout << *CG.Intersect(ID);
