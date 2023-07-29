@@ -60,7 +60,7 @@ Point3D Point3D::operator*(const double skalar) const
 
 Point3D Point3D::operator/(const double skalar) const
 {
-	if (std::abs(skalar) >= 2 * std::numeric_limits<double>::epsilon()) {
+	if (std::abs(skalar) >= GetEpsilon()) {
 		Point3D div;
 		div.x_ = x_ / skalar;
 		div.y_ = y_ / skalar;
@@ -117,9 +117,9 @@ Point3D Point3D::operator^(const Point3D& other) const {
 
 bool Point3D::operator==(const Point3D& other) const
 {
-	if (std::abs(x_ - other.x_) <=  2 * std::numeric_limits<double>::epsilon() &&
-		std::abs(y_ - other.y_) <= 2 * std::numeric_limits<double>::epsilon() &&
-		std::abs(z_ - other.z_) <= 2 * std::numeric_limits<double>::epsilon())
+	if (std::abs(x_ - other.x_) <= GetEpsilon() &&
+		std::abs(y_ - other.y_) <= GetEpsilon() &&
+		std::abs(z_ - other.z_) <= GetEpsilon())
 		return true;
 
 	return false;
@@ -209,7 +209,7 @@ Segment3D::Segment3D(const Segment3D& other) : start_(other.start_), end_(other.
 InterTypes Segment3D::CheckIntersection(const Segment3D& other) const
 {
 	//This condition means that the vectors do not lie in the same plane
-	if (Point3D::mixedProduct(Direction(), other.Direction(), other.start_ - start_) > std::numeric_limits<double>::epsilon()) {
+	if (Point3D::mixedProduct(Direction(), other.Direction(), other.start_ - start_) > GetEpsilon()) {
 		return InterTypes::Screw;
 	}	
 		
@@ -301,7 +301,7 @@ bool Segment3D::Contains(const Point3D& point) const
 	}
 	Segment3D AB{ start_, point };
 	Segment3D BC{ point, end_ };
-	if (abs(Length() - (AB.Length() + BC.Length())) <= 2 * std::numeric_limits<double>::epsilon()) {
+	if (abs(Length() - (AB.Length() + BC.Length())) <= GetEpsilon()) { //empirically calculated
 		return true;
 	}
 	return false;
@@ -454,7 +454,7 @@ Point2D Point2D::operator*(const double skalar) const
 
 Point2D Point2D::operator/(const double skalar) const
 {
-	if (std::abs(skalar) >= 2 * std::numeric_limits<double>::epsilon()) {
+	if (std::abs(skalar) >= GetEpsilon()) {
 		Point2D div;
 		div.x_ = x_ / skalar;
 		div.y_ = y_ / skalar;
@@ -465,8 +465,8 @@ Point2D Point2D::operator/(const double skalar) const
 
 bool Point2D::operator==(const Point2D& other) const
 {
-	if (std::abs(x_ - other.x_) <= 2 * std::numeric_limits<double>::epsilon() &&
-		std::abs(y_ - other.y_) <= 2 * std::numeric_limits<double>::epsilon())
+	if (std::abs(x_ - other.x_) <= GetEpsilon() &&
+		std::abs(y_ - other.y_) <= GetEpsilon())
 		return true;
 
 	return false;
@@ -526,7 +526,7 @@ Point2D* Line2D::Intersect(const Line2D& other) const
 {
 	double det = Direction().GetX() * other.Direction().GetY() - Direction().GetY() * other.Direction().GetX();
 
-	if (abs(det) <= 2 * std::numeric_limits<double>::epsilon()) {
+	if (abs(det) <= GetEpsilon()) {
 		return nullptr;
 	}
 
@@ -648,7 +648,7 @@ std::istream& Line3D::Read(std::istream& is)
 
 Line3D::Line3D(const Point3D& origin, const Point3D& direction)
 {
-	if (direction == origin)
+	if (direction == Point3D::zero())
 		throw std::exception("undefined direction");
 	origin_ = origin;
 	direction_ = direction;
@@ -675,4 +675,23 @@ Point3D* Line3D::Intersect(const Line3D& other) const
 
 	Point3D point = p + (t * v);
 	return  new Point3D(point);
+}
+
+double& Geometry::GetEpsilon()
+{
+	static bool init = false;
+	static double epsilon;
+	if (!init) {
+		epsilon = std::numeric_limits<float>::epsilon(); // = 1.19209e-07 // initialization on first call
+		init = true;
+	}
+	return epsilon;
+}
+
+void Geometry::SetPrecision(const double precision)
+{
+	if (precision <= 4 * std::numeric_limits<double>::epsilon()) { //If the value is less, then it may work incorrectly
+		return;
+	}
+	GetEpsilon() = precision;
 }
