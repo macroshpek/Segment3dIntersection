@@ -19,13 +19,13 @@ std::ostream& operator<<(std::ostream& os, InterTypes type);
 
 class Geometry
 {
-public:
+	
 	virtual std::ostream& Write(std::ostream& os) const = 0;
 	virtual std::istream& Read(std::istream& is) = 0;
 
+public:
 
-	friend
-		std::ostream& operator<<(std::ostream& os, const Geometry& obj);
+	friend std::ostream& operator<<(std::ostream& os, const Geometry& obj);
 	friend std::istream& operator>>(std::istream& is, Geometry& obj);
 };
 
@@ -36,9 +36,10 @@ private:
 	double x_;
 	double y_;
 
-public:
 	virtual std::ostream& Write(std::ostream& os) const override;
 	virtual std::istream& Read(std::istream& is) override;
+
+public:
 
 
 	Point2D(const double x = 0, const double y = 0);
@@ -82,11 +83,10 @@ class Point3D : public Geometry
 	double y_;
 	double z_;
 
-public:
-
 	virtual std::ostream& Write(std::ostream& os) const override;
 	virtual std::istream& Read(std::istream& is) override;
 
+public:
 
 	friend std::ostream& operator<<(std::ostream& os, const Point3D& point);
 	friend std::istream& operator>>(std::istream& is, Point3D& point);
@@ -109,8 +109,11 @@ public:
 	Point3D operator+(const Point3D& other) const;
 
 	Point3D operator-(const Point3D& other) const;
+	Point3D operator-() const;
 
 	Point3D operator*(const double skalar) const;
+	double operator*(const Point3D& other) const;
+	friend Point3D operator*(const double skalar, const Point3D& point);
 
 	Point3D operator/(const double skalar) const;
 
@@ -118,7 +121,6 @@ public:
 
 	bool operator==(const Point3D& other) const;
 	
-	double operator*(const Point3D& other) const;
 
 	static double mixedProduct(const Point3D& a, const Point3D& b, const Point3D& c);
 
@@ -141,11 +143,10 @@ class Segment2D : public Geometry
 
 	Segment2D IntersectBySegment(const Segment2D & other) const;
 
-public:
-
 	virtual std::ostream& Write(std::ostream& os) const override;
 	virtual std::istream& Read(std::istream& is) override;
 
+public:
 
 	Segment2D(const Point2D& start, const Point2D& end);
 	Segment2D(const Segment2D& other);
@@ -175,12 +176,11 @@ class Segment3D : public Geometry
 
 	bool IsIdentical(const Segment3D& other) const;
 
-public:
-
 	virtual std::ostream& Write(std::ostream& os) const override;
 	virtual std::istream& Read(std::istream& is) override;
-		
 
+public:
+	
 	Segment3D(const Point3D& start, const Point3D& end);
 	Segment3D(const Segment3D& other);
 	InterTypes CheckIntersection(const Segment3D& other) const;
@@ -192,6 +192,10 @@ public:
 	double DistanceBetween(const Segment3D& other) const;
 
 	Geometry* Intersect(const Segment3D& other) const;
+
+	double Length() const;
+
+	bool Contains(const Point3D& point) const;
 
 };
 
@@ -210,4 +214,18 @@ public:
 	Point2D Direction() const;
 
 	Point2D* Intersect(const Line2D& other) const;
+};
+
+class Line3D : public Geometry
+{
+	Point3D origin_;
+	Point3D direction_;
+
+	virtual std::ostream& Write(std::ostream& os) const override;
+	virtual std::istream& Read(std::istream& is) override;
+
+public:
+	Line3D(const Point3D& origin, const Point3D& direction);
+	Point3D* Intersect(const Line3D& other) const;
+	
 };
